@@ -43,7 +43,7 @@ dec = pl.decoder2dim(firstRes, alphabet = alphabet, maxChars= maxChars)
 print(dec)
 
 # load model
-model = keras.models.load_model("charCnn_6_polarity.h5")
+model = keras.models.load_model("charCnn_7_polarity.h5")
 
 model.metrics_names
 
@@ -59,7 +59,7 @@ both = np.hstack((hardPred, predTrue))
 predCorrect = np.where(hardPred == predTrue, 1, 0)
 
 print("acc:", predCorrect.sum()/ len(predCorrect))
-
+"""
 ## examples
 nExamples = 1000
 example = pd.read_csv(filepath_or_buffer=dataPath, nrows= nExamples)
@@ -83,4 +83,4 @@ for i in range(0, nExamples):
     plt.savefig('/home/jgucci/Desktop/uni/text_mining/tm_data/yelp_polarity/results/test_' + str(i) + ".png")
     plt.close()
 
-
+"""

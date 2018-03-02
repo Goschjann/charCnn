@@ -9,10 +9,10 @@ matplotlib.use("TkAgg")
 import tkinter as tk
 from  matplotlib.backends.backend_tkagg  import  FigureCanvasTkAgg
 from  matplotlib.figure  import  Figure
-
-# cnn
 import keras
 import projectlib as pl
+
+modelPath = "charCnn_7_polarity.h5"
 
 
 
@@ -78,7 +78,7 @@ class  Fitting(tk.Frame):
         input = textInput
         recodeText = pl.generate_one_hot(text=input, alphabet=alphabet, maxChars=maxChars)
         # load model
-        model = keras.models.load_model("charCnn_6_polarity.h5")
+        model = keras.models.load_model(modelPath)
 
         # only transpose AND NOT RESHAPE the inputs!!!
         pred = model.predict(recodeText.transpose())
