@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html>
+    <body>
+        <p>
+            {% if result != None %}
+            <img src="data:image/png;base64,{{ result }}" width="500">
+            {% endif %}
+        </p>
+        <button type="button" onclick="window.location.href='{{ url_for('home')}}';">Home</button>
+    </body>
+</html>

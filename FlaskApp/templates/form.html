@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='style/style.css') }}">
+        <style type="text/css">
+            textarea {
+             background-color: rgba(255, 255, 255, 0.1);
+             font-size: 1.5em;
+             font-family: 'Georgia';
+             border: 1px solid black;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Welcome to the review prediction App</h1>
+        <!-- out commented on macosx-->
+        <form action="{{ url_for('predictInput') }}" method="post">
+            <textarea name="text1" rows = "6" cols = "50">I did like the food very much and the nice atmosphere! Still I think the drinks are a little bit too expensive.</textarea>
+            <input type="submit", value="predict sentiment">
+        </form>
+        <form action="{{ url_for('explainInput') }}" method="post">
+            <textarea name="text2" rows = "6" cols = "50">I did like the food very much and the nice atmosphere! Still I think the drinks are a little bit too expensive.</textarea>
+            <input type="submit", value="explain prediction">
+        </form>
+
+    </body>
+</html>
+
+

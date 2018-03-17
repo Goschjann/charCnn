@@ -11,6 +11,7 @@ import collections
 import csv
 import random
 from keras.utils.np_utils import to_categorical
+import keras
 
 
 """
@@ -18,7 +19,7 @@ Classic check function
 """
 
 def check():
-    print("projectlib loaded HUI")
+    print("projectlib loaded fuji")
 
 """
 convert text to matrix of character strings
@@ -46,6 +47,50 @@ def generate_one_hot(text, alphabet, maxChars):
         # do nothing
 
     return(textRep)
+
+
+
+##########
+##########      encode review in embedding
+##########
+
+
+# helper function to get embedding vector for word
+
+def getVec(word, embedding):
+    return embedding.loc[word].as_matrix()
+
+
+def generate_glove_embed(text, embeddingPath, maxWords= 100):
+
+    embedding = pandas.read_table(embeddingPath, sep=" ", index_col=0, header=None, quoting=csv.QUOTE_NONE)
+    maxWords = 100
+
+    #  initialize empty ndarray with zeros only and depth 1
+    textRep = np.zeros(shape=(embedding.shape[1], maxWords, 1))
+
+    # cut text into words
+    textList = text.split()
+
+    # cut words after
+    if len(textList) > maxWords:
+        textList = textList[0:maxWords]
+
+    # store vector for each word
+    for wordIndex in range(0, len(textList)):
+
+        # use only words that are in the embedding
+        if textList[wordIndex] in embedding.index:
+            textRep[:, wordIndex, 0] = getVec(word = textList[wordIndex], embedding = embedding)
+
+
+    # rescale to [0, 1]
+    min = embedding.values.min()
+    max = embedding.values.max()
+
+    textRep = (textRep - min) / (np.diff([min, max])[0])
+
+    return textRep
 
 
 ##########
@@ -224,6 +269,37 @@ def buildSetDG(path_data, path_alphabet, maxChars, skiprows = 0):
     return(reviewRep[:, :, 0].reshape(-1, maxChars, lenAlpha), labels)
 
 
+##############
+############## Function that returns matrix representation and sentiment for x reviews FROM already read array
+##############
+
+# needed in the Data Generator
+# Difference: outputs data in reshaped shape
+# amount data is not needed anymore
+# uses skiprows to skip the reading of some rows
+
+def buildSetDGGlove(path_data, embeddingPath, dimEmbed = 50, maxWords = 100, skiprows = 0):
+
+    data = pandas.read_csv(filepath_or_buffer=path_data, skiprows=skiprows)
+
+    # generate data Matrix
+    reviews = data.iloc[:, 0]
+    reviewRep = np.zeros(shape=(len(reviews), (maxWords * dimEmbed), 1))
+    # stor.shape
+
+    for i in range(len(reviews)):
+        reviewRep[i, :, 0] = generate_glove_embed(text=reviews[i],
+                                         embeddingPath=embeddingPath,
+                                         maxWords = maxWords).reshape(-1, dimEmbed * maxWords, order="F")
+    # generate label vector
+    labels = to_categorical(data.iloc[:, 1])
+
+    print("i build set")
+
+
+    # changed for 2 net
+    return(reviewRep[:, :, 0].reshape(-1, maxWords, dimEmbed), labels)
+
 
 
 ##############
@@ -238,7 +314,94 @@ def buildSetDG(path_data, path_alphabet, maxChars, skiprows = 0):
 # dim_x = lenAlpha, dim_y = maxChars, batch_size = batch_size
 # we do not have a dim z as we use 1-dimensional images
 
-import numpy as np
+
+class DataGeneratorGlove(object):
+    # intitialize the whole vehicle
+    def __init__(self, dim_x = 32, dim_y = 32, batch_size = 32, shuffle = True, path_data = "bla", embeddingPath = "bla",
+                 maxWords = 100, allIDs = range(0, 2)):
+          'Initialization'
+          self.dim_x = dim_x
+          self.dim_y = dim_y
+          self.batch_size = batch_size
+          self.shuffle = shuffle
+          self.path_data = path_data
+          self.embeddingPath = embeddingPath
+          self.maxWords = maxWords
+          self.allIDs = allIDs
+
+    # again: we do not need labels as opposed to the blog post
+    # listIDs are given to that homie during the model.fit_generator() call
+    def generate(self, list_IDs):
+          'Generates batches of samples'
+          # Infinite loop
+          while 1:
+              # Generate order of exploration of dataset
+              # to add randomness
+              indexes = self.__get_exploration_order(list_IDs)
+
+              # Generate batches
+              imax = int(len(indexes)/self.batch_size)
+              for i in range(imax):
+                  # Find list of IDs
+                  list_IDs_temp = [list_IDs[k] for k in indexes[i*self.batch_size:(i+1)*self.batch_size]]
+
+                  # Generate data
+                  X, y = self.__data_generation(list_IDs_temp)
+
+                  yield X, y
+
+    # changes order of indices in the batches if shuffle is set true
+    # add randomness to data
+    def __get_exploration_order(self, list_IDs):
+          'Generates order of exploration'
+          # Find exploration order
+          indexes = np.arange(len(list_IDs))
+          if self.shuffle == True:
+              np.random.shuffle(indexes)
+
+          return indexes
+
+    # generates batches
+    # only need IDs
+    # IDs are beforehand shuffled by __get_exploration_order()
+    # we do not need the labels, automatically extracted by DG build
+    def __data_generation(self, list_IDs_temp):
+          'Generates data of batch_size samples'
+
+          # Generate data
+          # that is the FUNKY PART
+          # read only the lines from the review thingy that match the current list_IDs_temp
+          # aka skip all lines that do not match
+          # use np.setdiff1d to find the skip-IDs
+
+          deselectIDs = np.setdiff1d(self.allIDs, list_IDs_temp)
+
+          # check printer
+          # print("I start generating a data set")
+
+          X, y = buildSetDGGlove(path_data=self.path_data, embeddingPath=self.embeddingPath,
+                                        maxWords=self.maxWords, skiprows=deselectIDs)
+          print("i generate")
+
+          # return X, sparsify(y)
+          return X, y
+
+
+
+
+
+##############
+############## Data Generator Object Class
+##############
+
+# excellent blog post: https://stanford.edu/~shervine/blog/keras-how-to-generate-data-on-the-fly.html
+# adjusted a lot to pre-build buildSetDG
+
+
+# we need shape (trainSize, lenAlpha, maxChars, 1) for input X
+# dim_x = lenAlpha, dim_y = maxChars, batch_size = batch_size
+# we do not have a dim z as we use 1-dimensional images
+
 
 class DataGenerator(object):
     # intitialize the whole vehicle
@@ -311,7 +474,35 @@ class DataGenerator(object):
           return X, y
 
 
+##############
+############## predicttion Wrapper for LIME
+##############
 
 
+def predictFromText(textInputList):
+    # basically same code as in detect_review
+    alphabetPath = "../alphabet.txt"
+    alphabet = open(alphabetPath).read()
+    maxChars = 1014
+    model = keras.models.load_model('../charCnn8Huge.h5')
 
+    # catch single string inputs and convert them to list
+    if textInputList.__class__ != list:
+        print("caught single string")
+        print(textInputList)
+        textInputList = [textInputList]
+        print(textInputList)
+    # list for predictions
+    predStorage = []
+    # loop through input list and predict
+    for textInput in textInputList:
+        print(textInput)
+        recodeText = generate_one_hot(text=textInput, alphabet=alphabet, maxChars=maxChars)
+        pred = model.predict(recodeText.transpose())
+        # control output of function
+        # print(str(textInput), "\n", pred)
+        predStorage.append(pred)
+
+    # convert to dxk ndarray
+    return (np.hstack(predStorage).reshape(-1, 2))
 
