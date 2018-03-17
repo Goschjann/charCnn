@@ -10,3 +10,9 @@ This readme is structured as follows:
 4. How to: handle those scripts
 
 Work in progress
+
+## 1. CNNs for text classification
+
+1D convolution over character-encoded text. Example with the text "text mining":
+
+![animation 1D convolution](https://github.com/Goschjann/charCnn/blob/master/images/cnnFilter.gif)
