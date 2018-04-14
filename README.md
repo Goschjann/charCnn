@@ -25,6 +25,8 @@ Implementation of the small charCnn by [Zhang, Zhao LeCunn 2015](https://arxiv.o
 
 Used the [Yelp Polarity Data Set](https://drive.google.com/drive/folders/0Bz8a_Dbh9Qhbfll6bVpmNUtUcFdjYmF2SEpmZUZUcVNiMUw1TWN6RDV3a0JHT3kxLVhVR2M) to detect the sentiment of Yelp reviews.
 
+The fully trained model can be downloaded as a hdf5 file using [this link](https://janngoschenhofer.ocloud.de/index.php/s/SlJgMKuaiA5f1Eu). Make sure to install the h5py python package (available on pip) to access the file. 
+
 ## 3. LIME
 
 Use of the fantastic [LIME package](https://github.com/marcotcr/lime) to make some sense out of the local predictions of the charCnn. 
