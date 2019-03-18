@@ -17,11 +17,10 @@ pl.check()
 
 maxChars = 1014
 
-# path to train data
-#dataPath = "/home/jgucci/Desktop/uni/text_mining/tm_data/yelp_sentDataTrain.csv"
-
 # Yelp polarity data set by Le Cunn et al
-dataPath = '..data/trainPrep.csv'
+# downloaded previously
+storagePath = '/home/jgucci/Desktop/uni/text_mining/tm_data/'
+dataPath = '{}yelp_polarity/trainPrep.csv'.format(storagePath)
 alphabetPath = "alphabet.txt"
 lenAlpha = len(open(alphabetPath).read())
 
@@ -36,8 +35,6 @@ validIDs = np.setdiff1d(allIDs, trainIDs)
 # dictionary that stores IDs for train and validation
 # necessary for data generator
 partition = {"train": trainIDs, "validation": validIDs}
-
-# RUNNING VERSION
 
 #######################
 #
@@ -82,11 +79,9 @@ model.add(Dense(2, activation="softmax"))
 
 print(model.summary())
 
-plot_model(model, to_file="archcharCnn8Huge.png", show_layer_names=True, show_shapes=True)
+plot_model(model, to_file="{}archcharCnn19.png".format(storagePath), show_layer_names=True, show_shapes=True)
 
 ############ train
-
-# TODO: try binary_crossentropy and change buildSetDG in pl accordingly
 
 # Define optimizer for the model
 # adam = optimizers.Adam(lr = 0.0001,
@@ -124,28 +119,24 @@ stop_train = keras.callbacks.EarlyStopping(monitor = 'val_loss',
                                            verbose = 0,
                                            mode = 'auto')
 
-csvLogger = keras.callbacks.CSVLogger("charCnn8HugeLog.csv")
+csvLogger = keras.callbacks.CSVLogger("{}charCnn19Log.csv".format(storagePath))
 
 # fit the thingey
 model.fit_generator(generator=trainGenerator,
                     steps_per_epoch=len(partition["train"])// batch_size,
                     #steps_per_epoch=10,
-                    epochs= 60,
-                    verbose= 2,
+                    epochs= 50,
+                    verbose= 1,
                     callbacks=[csvLogger, stop_train],
                     validation_data=validGenerator,
                     validation_steps=len(partition["validation"])// batch_size)
                     #validation_steps=5)
 
-
 print("\n done with trainig ")
-
-model.save("charCnn8Huge.h5")
+model.save("{}charCnn19.h5".format(storagePath))
+print("\n and done with saving")
 
 # architecture plot
-plot_model(model, to_file="charCnn8Huge"
-                          ".png", show_layer_names=True, show_shapes=True)
-
-
-print("\n and done with saving")
+plot_model(model, to_file="{}charCnn19.png".format(storagePath), 
+    show_layer_names=True, show_shapes=True)
 

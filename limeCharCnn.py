@@ -60,9 +60,6 @@ print("yo")
 exp = explainer.explain_instance(text_instance=inputText, labels=[0, 1],
                      classifier_fn=predictFromText, num_features=8, num_samples=5000)
 
-
-
-
 print(exp)
 
 html = exp.as_html(labels=[0, 1], predict_proba=True, show_predicted_value=True)
